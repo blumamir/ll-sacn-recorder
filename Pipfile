@@ -7,6 +7,6 @@ verify_ssl = true
 
 [packages]
 sacn = "*"
+pyinstaller = "*"
 
 [requires]
-python_version = "3.6"

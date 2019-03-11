@@ -3,6 +3,7 @@ import sacn
 import argparse
 import json
 
+version = "1.0.0"
 
 def check_positive_int(value):
     ivalue = int(value)
@@ -28,6 +29,7 @@ parser.add_argument('--port', dest='port', action='store', type=check_positive_i
 parser.add_argument('--addr', dest='addr', action='store', type=str,
                     default='0.0.0.0',
                     help='addr of interface to listen for sACN data (use 0.0.0.0 to bind to all interfaces)')
+parser.add_argument('--version', action='version', version=version)
 args = parser.parse_args()
 
 # initialize rgb_data to store universe data until a full frame is received
