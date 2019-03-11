@@ -3,17 +3,27 @@ import sacn
 import argparse
 import json
 
+
+def check_positive_int(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("{} is an invalid positive int value".format(value))
+    return ivalue
+
+
 # program options
 parser = argparse.ArgumentParser(description='record sACN E1.31 led data, and store it to file')
 parser.add_argument('config_file', type=str,
                     help='config file that describe which univers to map to which strip')
 parser.add_argument('out_file', type=str,
                     help='file to write frames into')
-parser.add_argument('-n, --pixels_per_string', dest='pixels_per_string', action='store', type=int,
+parser.add_argument('-f, --frames_to_capture', dest='frames_to_capture', action='store', type=check_positive_int,
+                    help='if set, app will exit after capturing this amount of frames')
+parser.add_argument('-n, --pixels_per_string', dest='pixels_per_string', action='store', type=check_positive_int,
                     default=1000, help='number of pixels on every string')
-parser.add_argument('--number_of_strings', dest='number_of_strings', action='store', type=int,
+parser.add_argument('--number_of_strings', dest='number_of_strings', action='store', type=check_positive_int,
                     default=8, help='number of strings in the controller')
-parser.add_argument('--port', dest='port', action='store', type=int,
+parser.add_argument('--port', dest='port', action='store', type=check_positive_int,
                     default=5568, help='port to listen for sACN data')
 parser.add_argument('--ip', dest='ip', action='store', type=str,
                     default='127.0.0.1',
@@ -37,6 +47,8 @@ with open(args.config_file) as json_file:
         num_of_channels = uni_config['num_of_pixels'] * channels_per_pixel
         uni_to_range[int(uni)] = (start_index, num_of_channels)
 print("read config file {}, will monitor the following universes: {}".format(args.config_file, list(uni_to_range.keys())))
+if args.frames_to_capture:
+    print("will read {} frames and then quit. you can quit earlier if you want.".format(args.frames_to_capture))
 
 # open udp recv socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
@@ -78,6 +90,9 @@ while True:
     if len(recv_uni) == len(uni_to_range):
         f.write(rgb_data)
         total_frames += 1
+        if args.frames_to_capture and total_frames >= args.frames_to_capture:
+            print("captured {} frames. that's it".format(args.frames_to_capture))
+            break
         if total_frames % 100 == 0:
             print('wrote {} frames to file so far'.format(total_frames))
         recv_uni.clear()
