@@ -25,9 +25,9 @@ parser.add_argument('--number_of_strings', dest='number_of_strings', action='sto
                     default=8, help='number of strings in the controller')
 parser.add_argument('--port', dest='port', action='store', type=check_positive_int,
                     default=5568, help='port to listen for sACN data')
-parser.add_argument('--ip', dest='ip', action='store', type=str,
-                    default='127.0.0.1',
-                    help='ip of interface to listen for sACN data')
+parser.add_argument('--addr', dest='addr', action='store', type=str,
+                    default='0.0.0.0',
+                    help='addr of interface to listen for sACN data (use 0.0.0.0 to bind to all interfaces)')
 args = parser.parse_args()
 
 # initialize rgb_data to store universe data until a full frame is received
@@ -52,7 +52,7 @@ if args.frames_to_capture:
 
 # open udp recv socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
-sock.bind((args.ip, args.port))
+sock.bind((args.addr, args.port))
 
 # handle write to file
 f = open(args.out_file, "w+b")
