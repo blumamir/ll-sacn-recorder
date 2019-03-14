@@ -22,3 +22,44 @@ If you don't need all strings, or all pixels in a string, just don't configure t
 ## Stopping
 The program will capture sACN frames as soon as they are receive, and will keep capturing as long as it runs. To stop the program (which will stop writing frames to the file) use `Ctrl + Break` on keyboard (Note that on some keyboards, "Break" is labeled as "Pause").
 You can also use the command line option -f to set the total number of frames which will be written (script will exit automatically once all these frames are captured).
+
+## Config file
+The program should be configured with a json file that maps universes (as sent on sACN packets from applications like xLights or Vixen), to the physical LEDs for display.
+Example file should look like this:
+```json
+{
+  "1": {
+    "string_id": 0,
+    "pixel_in_string": 0,
+    "num_of_pixels": 3
+  },
+  "2": {
+    "string_id": 7,
+    "pixel_in_string": 829,
+    "num_of_pixels": 170
+  },
+  "17": {
+    "string_id": 4,
+    "pixel_in_string": 20,
+    "num_of_pixels": 1
+  }
+}
+``` 
+In the above example, `1\2\17` are the universe numbers. They should match the universes sent on the sACN packets. LED sequence softwares support configuration of this value.
+
+`string_id` is a value in range [0, number_of_strings - 1], for Teensy 3.5, it should be a value in the range 0-7.
+
+`pixel_in_string` is the pixel offset in the givin string, for which we should map the beginning of the LEDs colors in the universe.
+
+`num_of_pixels` is the number of pixels that we want to copy from the sACN packet, for display. According to the sACN format, it should be <= 170.
+
+`pixel_in_string + num_of_pixels` should be in the range of [0 - pixel_in_string - 1], meaning - we cannot copy more pixels then they are in the string.
+
+The above example says: 
+- take the first 3 pixels from universe 1, and copy them to string 0 starting at beginning of the string (`"pixel_in_string": 0`)
+- take the the 170 pixels from universe 2, and copy them to string 7 starting at pixel 829. That would work only if `pixel_in_string` from command line arguments is set to 1000 or above, otherwise we would need to copy data to non-existing pixels.
+- take a single pixel (the first one) from universe 17, and copy it to string 4 on pixel 20 (from string start).
+
+
+
+    

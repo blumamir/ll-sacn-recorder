@@ -3,7 +3,7 @@ import sacn
 import argparse
 import json
 
-version = "1.0.0"
+version = "1.0.1"
 
 def check_positive_int(value):
     ivalue = int(value)
@@ -43,10 +43,32 @@ uni_to_range = {}
 with open(args.config_file) as json_file:
     json_data = json.loads(json_file.read())
     for uni, uni_config in json_data.items():
-        start_index = (uni_config['string_id'] * args.pixels_per_string + uni_config['pixel_in_string']) * channels_per_pixel
-        if uni_config['num_of_pixels'] > 170:
-            raise ValueError("num_of_pixels too high for sACN. should be <= 170, recived: " + str(uni_config['num_of_pixels']))
-        num_of_channels = uni_config['num_of_pixels'] * channels_per_pixel
+
+        string_id = uni_config['string_id']
+        if string_id < 0 or string_id >= args.number_of_strings:
+            raise ValueError(
+                "string_id read from config file on universe {} is not in valid range [0, {}], received: {}".format(uni, args.number_of_strings - 1, string_id))
+
+        num_of_pixels = uni_config['num_of_pixels']
+        if num_of_pixels > 170:
+            raise ValueError(
+                "num_of_pixels read from config file on universe {} is too high for sACN. "
+                "should be <= 170, received: {}".format(uni, num_of_pixels))
+
+        pixel_in_string = uni_config['pixel_in_string']
+        last_pixel_index = pixel_in_string + num_of_pixels
+        if pixel_in_string < 0:
+            raise ValueError("pixel_in_string for universe {} is negative, received: {}".format(uni, pixel_in_string))
+        if last_pixel_index >= args.pixels_per_string:
+            raise ValueError(
+                "pixel_in_string read from config on universe {} file is not in valid range."
+                "the value is {}, and after adding num_of_pixels which is {}, we receive {}, which is >= than "
+                "total number of pixels in string {}"
+                .format(uni, pixel_in_string, num_of_pixels, last_pixel_index, args.pixels_per_string))
+
+        start_index = (string_id * args.pixels_per_string + pixel_in_string) * channels_per_pixel
+
+        num_of_channels = num_of_pixels * channels_per_pixel
         uni_to_range[int(uni)] = (start_index, num_of_channels)
 print("read config file {}, will monitor the following universes: {}".format(args.config_file, list(uni_to_range.keys())))
 if args.frames_to_capture:
